@@ -8,8 +8,7 @@ function openChestSync(chestPath) {
 function checkTreasure(chestPath) {
   //Return true if the chest contain the treasure else return false
   const chest = openChestSync(chestPath);
-  if (chest.hasOwnProperty("treasure") && chest["treasure"]) return true;
-  return false;
+  return chest.hasOwnProperty("treasure") && chest["treasure"] ? true : false;
 }
 
 function checkDecoy(chestPath) {
@@ -19,21 +18,27 @@ function checkDecoy(chestPath) {
 
 function checkClue(chestPath) {
   //Return the clue if it's a real clue
-  const res = openChestSync(chestPath);
-  if (res["clue"].includes("/room")) return res["clue"];
+  const chest = openChestSync(chestPath);
+  if (checkType(chestPath) === "chest" || checkType(chestPath) === "room")
+    return chest["clue"];
 }
 
 function checkType(roomOrChest) {
-  //check if it's a room or a chest
-  if (roomOrChest.includes("chest")) return "chest";
-  else return "room";
+  //Check if it's a room, chest or decoy and returns answer accordingly
+  try {
+    if (fs.lstatSync(roomOrChest).isDirectory()) return "room";
+    if (fs.lstatSync(roomOrChest).isFile()) return "chest";
+  } catch {
+    return "decoy";
+  }
 }
 function findTreasureSync(roomPath) {
+  //The algorithm that will finds the treasure
   let filsArray = fs.readdirSync(roomPath);
   for (let i = 0; i < filsArray.length; i++) {
     const currentPath = `${roomPath}/${filsArray[i]}`;
     drawMapSync(currentPath);
-    console.log(`${currentPath} ${i}`);
+    console.log(`${currentPath}`);
     if (checkType(currentPath) === "room") findTreasureSync(currentPath);
     else if (checkType(currentPath) === "chest")
       if (checkTreasure(currentPath)) {
@@ -44,9 +49,8 @@ function findTreasureSync(roomPath) {
   }
 }
 
-findTreasureSync("./maze");
-
 function drawMapSync(currentRoomPath) {
-  //draw map
-  fs.writeFileSync("./map.txt", currentRoomPath + "\n", { flag: "a+" });
+  //Draw map
+  fs.writeFileSync("./map2.txt", currentRoomPath + "\n", { flag: "a+" });
 }
+findTreasureSync("./maze"); //Call the function and start the maze
